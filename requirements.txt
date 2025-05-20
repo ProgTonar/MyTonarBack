@@ -1,0 +1,8 @@
+fastapi
+sqlalchemy
+alembic
+aiohttp
+aiomysql
+uvicorn
+dotenv
+python-multipart
