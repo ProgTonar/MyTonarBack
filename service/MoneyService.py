@@ -11,8 +11,8 @@ class MoneyService:
             "Authorization": f"Basic {token}",
         }
 
-    async def get_money(self, table_id: str):
-        payload = {"tableId": table_id}
+    async def get_money(self, login: int):
+        payload = {"tableId": login}
 
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
@@ -24,14 +24,7 @@ class MoneyService:
                 )
                 response.raise_for_status()
                 return response.text
-
-        except httpx.HTTPStatusError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Внешний сервис вернул ошибку: {exc}",
-            )
-        except httpx.RequestError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"Не удалось подключиться к сервису: {exc}",
-            )
+        except httpx.HTTPStatusError as e:
+            return {"error": "HTTP error", "status_code": e.response.status_code}
+        except httpx.RequestError as e:
+            return {"error": "Request failed", "message": str(e)}

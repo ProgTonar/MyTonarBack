@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
-from models.contacts import Contacts
+from models.Contact import Contacts
 from schemas.ContactSchema import Contacts as ContactsSchema, UpdateContacts, CreateContacts
 
 class ContactService:

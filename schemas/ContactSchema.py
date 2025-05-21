@@ -18,10 +18,8 @@ class ContactsBase(BaseModel):
             return None
         return v
 
-
 class CreateContacts(ContactsBase):
     pass
-
 
 class UpdateContacts(BaseModel):
     name: Optional[str] = Field(None, description="ФИО сотрудника")
@@ -38,7 +36,6 @@ class UpdateContacts(BaseModel):
             return None
         return v
 
-
 class Contacts(ContactsBase):
     id: int = Field(description="Уникальный идентификатор контакта")
     created_at: datetime = Field(description="Дата и время создания")
@@ -47,7 +44,6 @@ class Contacts(ContactsBase):
     class Config:
         from_attributes = True 
         arbitrary_types_allowed = True
-
 
 class ContactsListResponse(BaseModel):
     items: List[Contacts] = Field(description="Список контактов")

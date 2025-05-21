@@ -57,7 +57,7 @@ def make_project():
         with open(db_file, "w") as f:
             f.write(
                 "from sqlalchemy import create_engine\n"
-                "from sqlalchemy.ext.declarative import declarative_base\n"
+                "from sqlalchemy.orm import declarative_base\n"
                 "from sqlalchemy.orm import sessionmaker\n\n"
                 "SQLALCHEMY_DATABASE_URL = 'sqlite:///./database/base.db'\n\n"
                 "engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={\"check_same_thread\": False})\n"
@@ -188,6 +188,50 @@ def make_util(name: str):
             f"# Util {name}"
         )
     typer.echo(f"✅ Утилита {name} создана")
+
+@app.command()
+def make_test(name: str):
+    path = os.path.join(BASE_DIR, "tests")
+    create_folder_with_init(path)
+    file_path = os.path.join(path, f"test_{name}.py")
+    check_file_exists(file_path)
+    create_git_ignore(path)
+
+    with open(file_path, "w") as f:
+        f.write(
+            "import pytest\n"
+            "from httpx import AsyncClient, ASGITransport\n"
+            "from main import app\n\n"
+            "transport = ASGITransport(app=app)\n"
+            "base_url = \"http://test\"\n\n"
+            "@pytest.mark.asyncio\n"
+            "async def test_create_user_success():\n"
+            "    async with AsyncClient(transport=transport, base_url=base_url) as ac:\n"
+            "        response = await ac.post(\"/user/create\", json={\n"
+            "            \"name\": \"Тест\",\n"
+            "            \"email\": \"newuser@example.com\"\n"
+            "        })\n"
+            "    assert response.status_code == 200\n"
+            "    assert \"успешно\" in response.text\n\n"
+            "@pytest.mark.asyncio\n"
+            "async def test_create_user_invalid_email():\n"
+            "    async with AsyncClient(transport=transport, base_url=base_url) as ac:\n"
+            "        response = await ac.post(\"/user/create\", json={\n"
+            "            \"name\": \"Тест\",\n"
+            "            \"email\": \"notanemail\"\n"
+            "        })\n"
+            "    assert response.status_code == 422\n\n"
+            "# @pytest.mark.asyncio\n"
+            "# async def test_upload_avatar_without_token():\n"
+            "#    async with AsyncClient(transport=transport, base_url=base_url) as ac:\n"
+            "#        with open(\"tests/test_image.jpg\", \"rb\") as file:\n"
+            "#            files = {\"file\": (\"test.jpg\", file, \"image/jpeg\")}\n"
+            "#            response = await ac.post(\"/user/1/upload_avatar\", files=files)\n"
+            "#    assert response.status_code == 401\n"
+            "#    assert \"Требуется токен\" in response.text\n"
+        )
+
+    typer.echo(f"✅ Тест {name} создан")
 
 # Запуск CLI
 if __name__ == "__main__":

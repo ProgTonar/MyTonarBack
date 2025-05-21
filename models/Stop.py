@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 from database import Base
-from models.bus_navigate import stops_has_busnavigate
+from models.Bus import stops_has_busnavigate
 
 class Stop(Base):
     __tablename__ = "stops"

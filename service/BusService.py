@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, insert, delete
 from sqlalchemy.orm import selectinload
-from models.bus_navigate import BusNavigate, stops_has_busnavigate
+from models.Bus import BusNavigate, stops_has_busnavigate
 from models.stop import Stop
 from schemas.BusSchema import BusNavigateCreate, BusNavigateUpdate
 from typing import List, Optional

@@ -3,9 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from schemas.ContactSchema import Contacts as ContactsSchema, ContactsListResponse, UpdateContacts, CreateContacts
 from database import get_db
 from typing import Dict, Any
-from services.ContactService import get_all_contacts, get_contact_by_id, update_contact, delete_contact, create_contact
+from service.ContactService import get_all_contacts, get_contact_by_id, update_contact, delete_contact, create_contact
 
-router = APIRouter(prefix="/contacts", tags=["contacts"])
+router = APIRouter()
 
 
 @router.get(

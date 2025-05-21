@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from routes import BusRoute, ContactsRoute, MoneyRoute
+from database import Base, engine
 
     
 app = FastAPI(
@@ -9,6 +10,8 @@ app = FastAPI(
     version="1.0.0",
     redoc_url=None
 )
+
+Base.metadata.create_all(bind=engine)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db
-from services.bus_navigate import BusNavigateService
-from schemas.bus_navigate import BusNavigate, BusNavigateCreate, BusNavigateUpdate
+from service.BusService import BusNavigateService
+from schemas.BusSchema import BusNavigate, BusNavigateCreate, BusNavigateUpdate
 from typing import List
 
-router = APIRouter(prefix="/bus-navigates", tags=["bus-navigates"])
+router = APIRouter()
 
 @router.post("/", response_model=BusNavigate)
 async def create_bus_navigate(

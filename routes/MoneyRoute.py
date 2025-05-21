@@ -1,24 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import HTMLResponse
-from models.money import MoneyRequest
-from services.MoneyService import MoneyService
+from fastapi import APIRouter, Depends
+from service.MoneyService import MoneyService
+from schemas.MoneySchema import MoneySchema
+from service.MoneyService import MoneyService
 
-router = APIRouter(prefix="/money", tags=["money"])
+router = APIRouter()
 
+def get_money_service():
+    return MoneyService()
 
-@router.post("/", response_class=HTMLResponse)
-async def get_money(
-    request: MoneyRequest,
-    money_service: MoneyService = Depends(lambda: MoneyService())
-) -> HTMLResponse:
-    try:
-        return await money_service.get_money(request.tableId)
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Внутренняя ошибка сервера: {str(e)}"
-        )
-
+@router.get('/get/{login}', response_model=MoneySchema)
+async def get_money(login: int,service: MoneyService = Depends(get_money_service)):
+    return await service.get_money(login)
 
