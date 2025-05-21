@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = 'mysql+pymysql://admin:test1234@localhost:3306/pyapi'
+SQLALCHEMY_DATABASE_URL = 'mysql+pymysql://artem:test1234@localhost:3306/my_tonar'
 
 ## для sqlLite
 ## engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}) 

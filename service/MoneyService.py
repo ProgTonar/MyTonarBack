@@ -1,14 +1,15 @@
-from fastapi import HTTPException, status
 import httpx
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class MoneyService:
     def __init__(self):                      
-        self.base_url = "http://10.0.1.23/zup/hs/tested/GetMoney"
-        token = "0JDQtNC80LjQvdC40YHRgtGA0LDRgtC+0YA6MTk3MTE5Njc="
         self.headers = {
-            "Content-Type": "application/json",
-            "Accept": "text/html",            
-            "Authorization": f"Basic {token}",
+            'Content-Type': 'application/json',
+            'Accept': 'text/html',            
+            'Authorization': f'Basic {os.getenv('ZUP_TOKEN')}',
         }
 
     async def get_money(self, login: int):
@@ -17,10 +18,10 @@ class MoneyService:
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.request(    
-                    method="GET",
-                    url=self.base_url,
-                    headers=self.headers,
-                    json=payload,
+                    method = "GET",
+                    url = os.getenv('ZUP_1C') + 'GetMoney',
+                    headers = self.headers,
+                    json = payload,
                 )
                 response.raise_for_status()
                 return response.text

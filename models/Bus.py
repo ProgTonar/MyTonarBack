@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, JSON, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
 from database import Base
 
 stops_has_busnavigate = Table(

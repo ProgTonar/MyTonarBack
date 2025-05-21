@@ -9,3 +9,7 @@ python-multipart
 httpx
 inflect
 typer
+email_validator
+pymysql
+cryptography
+pydantic
