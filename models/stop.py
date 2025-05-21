@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, String, DateTime, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
-from app.database import Base
-from app.models.bus_navigate import stops_has_busnavigate
+from database import Base
+from models.bus_navigate import stops_has_busnavigate
 
 class Stop(Base):
     __tablename__ = "stops"

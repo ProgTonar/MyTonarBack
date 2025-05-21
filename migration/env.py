@@ -18,8 +18,8 @@ sys.path.append(base_dir)
 dotenv_path = os.path.join(base_dir, '.env')
 load_dotenv(dotenv_path)
 
-from app.models import contacts, bus_navigate, stop
-from app.database import Base
+from models import contacts, bus_navigate, stop
+from database import Base
 
 config = context.config
 

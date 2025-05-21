@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, JSON, Table, ForeignKe
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
-from app.database import Base
+from database import Base
 
 stops_has_busnavigate = Table(
     'stops_has_busnavigate',

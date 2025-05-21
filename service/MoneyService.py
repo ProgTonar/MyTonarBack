@@ -1,6 +1,5 @@
-import httpx
 from fastapi import HTTPException, status
-
+import httpx
 
 class MoneyService:
     def __init__(self):                      

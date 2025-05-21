@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
-from app.models.money import MoneyRequest
-from app.services.money_get import MoneyService
+from models.money import MoneyRequest
+from services.MoneyService import MoneyService
 
 router = APIRouter(prefix="/money", tags=["money"])
 

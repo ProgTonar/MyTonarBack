@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.database import get_db
-from app.services.bus_navigate import BusNavigateService
-from app.schemas.bus_navigate import BusNavigate, BusNavigateCreate, BusNavigateUpdate
+from database import get_db
+from services.bus_navigate import BusNavigateService
+from schemas.bus_navigate import BusNavigate, BusNavigateCreate, BusNavigateUpdate
 from typing import List
 
 router = APIRouter(prefix="/bus-navigates", tags=["bus-navigates"])
