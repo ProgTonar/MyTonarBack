@@ -23,7 +23,7 @@ app.add_middleware(
 
 # app.include_router(BusRoute, prefix="/bus", tags=["Расписание автобусов"])
 # app.include_router(ContactsRoute, prefix="/contact", tags=["Контакты"])
-app.include_router(MoneyRoute, prefix="/money", tags=["Расчетный листок"])
+app.include_router(MoneyRoute, prefix="/api/money", tags=["Расчетный листок"])
 
 @app.get("/")
 async def root():

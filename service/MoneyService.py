@@ -1,31 +1,28 @@
+from fastapi import HTTPException, status
 import httpx
 import os
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
 
-class MoneyService:
-    def __init__(self):                      
-        self.headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'text/html',            
-            'Authorization': f'Basic {os.getenv('ZUP_TOKEN')}',
-        }
+class MoneyService:        
 
     async def get_money(self, login: int):
-        payload = {"tableId": login}
-
         try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.request(    
-                    method = "GET",
-                    url = os.getenv('ZUP_1C') + 'GetMoney',
-                    headers = self.headers,
-                    json = payload,
-                )
-                response.raise_for_status()
-                return response.text
+            url = f"{os.getenv('ZUP_1C')}GetMoney"
+            payload = {"tableId": f"{login}"}
+            headers = {
+                "authorization": f"Basic {os.getenv('ZUP_TOKEN')}",
+                "content-type": "application/json",
+                "accept": "application/json"
+            }
+
+            with httpx.Client() as client:
+                response = client.request("GET", url, content=json.dumps(payload), headers=headers)
+            
+            return {"money": response.text}
         except httpx.HTTPStatusError as e:
-            return {"error": "HTTP error", "status_code": e.response.status_code}
+            raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
         except httpx.RequestError as e:
-            return {"error": "Request failed", "message": str(e)}
+            raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,detail=str(e))
