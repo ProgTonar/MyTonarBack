@@ -6,3 +6,5 @@ aiomysql
 uvicorn
 dotenv
 python-multipart
+requests
+httpx
