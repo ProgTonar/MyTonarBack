@@ -13,5 +13,5 @@ class FoodFeedback(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
-    food = relationship('Food', back_populates=feedback)
+    food = relationship('Food', back_populates='feedback')
 
