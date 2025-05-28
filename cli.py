@@ -97,7 +97,7 @@ def make_project():
 def make_model(name: str):
     path = os.path.join(BASE_DIR, "models")
     create_folder_with_init(path)
-    file_path = os.path.join(path, f"{pluralize(name)}.py")
+    file_path = os.path.join(path, f"{name}.py")
     check_file_exists(file_path)
     create_git_ignore(path)
 

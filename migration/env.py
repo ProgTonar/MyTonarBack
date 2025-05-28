@@ -1,44 +1,42 @@
-import asyncio
 from logging.config import fileConfig
-from dotenv import load_dotenv
 
+from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-import os
-import sys
+from database.database import Base
+from sqlalchemy.engine.url import make_url
+import pymysql
+from models.Canteen import Menu, Food, FoodCategory, FoodFeedback, FoodScore
+from models.Bus import Bus, Stop
 
-
-base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(base_dir)
-
-dotenv_path = os.path.join(base_dir, '.env')
-load_dotenv(dotenv_path)
-
-from models import Bus, Contact, stop
-from database import Base
 
 config = context.config
 
-# Проверяем, что DATABASE_URL не None
-database_url = os.getenv("DATABASE_URL")
-if not database_url:
-    raise ValueError("DATABASE_URL environment variable is not set. Check your .env file.")
-    
-config.set_main_option("sqlalchemy.url", database_url)  
-
-
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-    
-  
 
+def create_database_if_not_exists(database_url: str):
+    url = make_url(database_url)
+    db_name = url.database
+
+    connection = pymysql.connect(
+        host=url.host,
+        user=url.username,
+        password=url.password,
+        port=url.port or 3306
+    )
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+    finally:
+        connection.close()
+
+create_database_if_not_exists(config.get_main_option("sqlalchemy.url"))
 
 target_metadata = Base.metadata
-
 
 
 def run_migrations_offline() -> None:
@@ -65,35 +63,26 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode.
 
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_async_migrations() -> None:
-    """In this scenario we need to create an Engine
+    In this scenario we need to create an Engine
     and associate a connection with the context.
 
     """
-
-    connectable = async_engine_from_config(
+    connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection, target_metadata=target_metadata
+        )
 
-    await connectable.dispose()
-
-
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-
-    asyncio.run(run_async_migrations())
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():

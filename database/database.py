@@ -1,8 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = 'mysql+pymysql://artem:test1234@localhost:3306/my_tonar'
+SQLALCHEMY_DATABASE_URL = os.getenv('SQL_BASE')
 
 ## для sqlLite
 ## engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}) 

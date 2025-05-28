@@ -3,15 +3,15 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from database import Base
 
-stops_has_busnavigate = Table(
-    'stops_has_busnavigate',
+bus_route_stops = Table(
+    'bus_route_stops',
     Base.metadata,
-    Column('bus_navigate_id', Integer, ForeignKey('bus_navigates.id'), primary_key=True),
-    Column('stop_id', Integer, ForeignKey('stops.id'), primary_key=True)
+    Column('bus_navigate_id', Integer, ForeignKey('bus_routes.id'), primary_key=True),
+    Column('stop_id', Integer, ForeignKey('bus_stops.id'), primary_key=True)
 )
 
 class BusNavigate(Base):
-    __tablename__ = "bus_navigates"
+    __tablename__ = "bus_routes"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
@@ -22,4 +22,7 @@ class BusNavigate(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
-    stops = relationship("Stop", secondary=stops_has_busnavigate, back_populates="bus_navigates") 
+    stops = relationship("stop", secondary=bus_route_stops, back_populates="bus_routes") 
+
+
+    
