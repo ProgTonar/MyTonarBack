@@ -12,4 +12,4 @@ class Menu(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
-    foods = relationship('Food', back_populates='menus')
+    food = relationship('Food', back_populates='menu')

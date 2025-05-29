@@ -21,4 +21,4 @@ class Food(Base):
     category = relationship('FoodCategory', back_populates='foods')
     feedback = relationship('FoodFeedback', back_populates='food')
     score = relationship('FoodScore', back_populates='food')
-    menus = relationship('Menu', back_populates='foods')
+    menu = relationship('Menu', back_populates='food')

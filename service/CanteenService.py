@@ -1,11 +1,12 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, load_only
+from sqlalchemy import func, and_
 from fastapi import HTTPException, status
 import httpx
 import os
 from dotenv import load_dotenv
 from schemas.CanteenSchema import GetReceipt, CreateMenu
 from schemas.BaseSchema import RessponseMessage
-from datetime import datetime
+from datetime import datetime, time
 from typing import List
 from models import Food, Menu, FoodCategory
 
@@ -103,5 +104,40 @@ class CanteenService:
             return RessponseMessage(message='Меню успешно загруженно')
         except httpx.HTTPStatusError as e:
             raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
-        except httpx.RequestError as e:
-            raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,detail=str(e))
+        
+    async def get_menu_today(self):
+        try:
+            start_of_day = datetime.combine(datetime.today(), time.min)
+            end_of_day = datetime.combine(datetime.today(), time.max)
+
+            filter_menu = (
+                self.db.query(
+                    func.max(Menu.id)
+                )
+                .filter(Menu.created_at.between(start_of_day, end_of_day))
+                .group_by(Menu.food_id)
+                .subquery()
+            )
+
+            raw_foods = (
+                self.db.query(Food)
+                .join(Menu, and_(
+                    Menu.food_id == Food.id,
+                    Menu.id.in_(filter_menu)
+                ))
+                .all()
+            )
+
+            foods_today = []
+
+            for item in raw_foods:
+                foods_today.append({
+                    'name': item.name,
+                    'cost': item.cost,
+                    'weight': item.weight,
+                    'category': item.category.name
+                })
+
+            return foods_today
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=e.response.status_code, detail=e.response.text)

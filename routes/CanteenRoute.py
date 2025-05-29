@@ -24,6 +24,6 @@ async def get_receipt_now(login: int, service: CanteenService = Depends(get_cant
 async def create_menu(foods: list[CreateMenu], service: CanteenService = Depends(get_canteen_service)):
     return await service.create_menu(foods)
 
-# @router.get('/menu/get')
-# async def get_menu(menu: GetMenu, service: CanteenService = Depends(get_canteen_service)):
-#     return await service.get_menu(menu)
+@router.get('/menu/today/get')
+async def get_menu_today(service: CanteenService = Depends(get_canteen_service)):
+    return await service.get_menu_today()
