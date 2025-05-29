@@ -2,6 +2,7 @@ from database import Base
 from sqlalchemy.sql import func
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
+from models.Canteen.Food import Food
 
 class FoodFeedback(Base):
     __tablename__ = 'food_feedbacks'

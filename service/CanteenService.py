@@ -3,9 +3,12 @@ from fastapi import HTTPException, status
 import httpx
 import os
 from dotenv import load_dotenv
-import json
-from schemas.CanteenSchema import GetReceipt, GetMenu
-from datetime import datetime, date
+from schemas.CanteenSchema import GetReceipt, CreateMenu
+from schemas.BaseSchema import RessponseMessage
+from datetime import datetime
+from typing import List
+from models import Food, Menu, FoodCategory
+
 
 load_dotenv()
 
@@ -71,9 +74,33 @@ class CanteenService:
         except httpx.RequestError as e:
             raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,detail=str(e))
 
-    async def get_menu(self, menu: GetMenu):
+    async def create_menu(self, foods: List[CreateMenu]):
         try:
-            'sadasd'    
+            for food in foods:
+                db_food = self.db.query(Food).filter(Food.code == food.code).first()
+                
+                if db_food:
+                    db_food.cost = food.cost
+
+                    food_day = Menu(food_id=db_food.id)
+                    self.db.add(food_day)
+                else:
+                    category = self.db.query(FoodCategory).filter(FoodCategory.name == food.category).first()
+                    
+                    if not category:
+                        raise HTTPException(status_code=404, detail=f'Категория блюда "{food.name}" не найдена')
+
+                    food_new = Food(name=food.name, code=food.code, weight=food.weight, cost=food.cost ,category_id=category.id)
+                    self.db.add(food_new)
+
+                    self.db.flush()
+
+                    food_day = Menu(food_id=food_new.id)
+                    self.db.add(food_day)
+
+            self.db.commit()
+
+            return RessponseMessage(message='Меню успешно загруженно')
         except httpx.HTTPStatusError as e:
             raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
         except httpx.RequestError as e:
