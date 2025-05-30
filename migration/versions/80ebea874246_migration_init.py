@@ -1,8 +1,8 @@
 """migration_init
 
-Revision ID: 900f283c17ba
+Revision ID: 80ebea874246
 Revises: 
-Create Date: 2025-05-29 10:16:08.803465
+Create Date: 2025-05-30 08:58:47.672916
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '900f283c17ba'
+revision: str = '80ebea874246'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -67,7 +67,7 @@ def upgrade() -> None:
     sa.Column('category_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['category_id'], ['food_categories.id'], ),
+    sa.ForeignKeyConstraint(['category_id'], ['food_categories.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_foods_category_id'), 'foods', ['category_id'], unique=False)
@@ -79,7 +79,7 @@ def upgrade() -> None:
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ),
+    sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_food_feedbacks_food_id'), 'food_feedbacks', ['food_id'], unique=False)
@@ -92,7 +92,7 @@ def upgrade() -> None:
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ),
+    sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_food_scores_food_id'), 'food_scores', ['food_id'], unique=False)
@@ -104,7 +104,7 @@ def upgrade() -> None:
     sa.Column('food_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ),
+    sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_menu_food_id'), 'menu', ['food_id'], unique=False)

@@ -27,6 +27,6 @@ app.add_middleware(
 app.include_router(MoneyRoute, prefix="/api/money", tags=["Расчетный листок"])
 app.include_router(CanteenRoute, prefix="/api/canteen", tags=["Столовая"])
 
-@app.get("/")
+@app.get("/", summary='Тестовый запрос', tags=["Тест"])
 async def root():
     return {"message": "Hello World!"}

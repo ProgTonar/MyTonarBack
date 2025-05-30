@@ -40,7 +40,7 @@ def check_file_exists(file_path):
 # Команда создания структуры проекта
 @app.command()
 def make_project():
-    folders = ["models", "schemas", "routes", "service", "database", "storage"]
+    folders = ["models", "schemas", "routes", "service", "database", "storage", "scripts"]
     for folder in folders:
         path = os.path.join(BASE_DIR, folder)
         if not os.path.exists(path):
@@ -188,6 +188,64 @@ def make_util(name: str):
             f"# Util {name}"
         )
     typer.echo(f"✅ Утилита {name} создана")
+
+@app.command()
+def make_factory(name: str):
+    path = os.path.join(BASE_DIR, "database/factories")
+    file_path = os.path.join(path, f"{name}Factory.py")
+    check_file_exists(file_path)
+    create_git_ignore(path)
+
+    with open(file_path, "w") as f:
+        f.write(
+            "import factory"
+            "from factory.alchemy import SQLAlchemyModelFactory"
+            "from models import SomeModel"
+            "from database import SessionLocal"
+            f"class {name}(SQLAlchemyModelFactory):"
+            "    class Meta:"
+            "        model = SomeModel"
+            "        sqlalchemy_session = SessionLocal()"
+            "        sqlalchemy_session_persistence = 'commit'"
+            "    name = factory.Iterator([ # колонка в таблице" 
+            "        'data1', # данные для колонки"
+            "        'data2', "
+            "        'data3', "
+            "    ])"
+        )
+    typer.echo(f"✅ Фабрика {name} создана")
+
+@app.command()
+def make_script(name: str):
+    path = os.path.join(BASE_DIR, "scripts")
+    create_folder_with_init(path)
+    file_path = os.path.join(path, f"{name}Script.py")
+    check_file_exists(file_path)
+    create_git_ignore(path)
+
+    with open(file_path, "w") as f:
+        f.write(
+            "from database import SessionLocal, engine\n"
+            "from models import SomeMOdel\n"
+            "from database.factories.SomeFactory import SomeFactory\n\n"
+            f"def {name}Script():\n"
+            "    db = SessionLocal()\n"
+            "    try:\n"
+            "        existing = db.query(SomeMOdel).count()\n\n"
+            "        if existing > 0:\n"
+            "            print('Стартовые данные уже существуют')\n"
+            "            return\n\n"
+            "        SomeFactory.create_batch(7)\n\n"
+            "        print('Данные загружены успешно')\n"
+            "    except Exception as e:\n"
+            '        print(f"Произошла ошибка в загрузке данных: {e}")\n'
+            "        db.rollback()\n"
+            "    finally:\n"
+            "        db.close()\n\n"
+            "if __name__ == '_main__':\n"
+            f"    {name}Script()\n"
+        )
+    typer.echo(f"✅ скрипт {name} создан")
 
 @app.command()
 def make_test(name: str):

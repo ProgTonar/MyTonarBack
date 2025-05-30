@@ -8,7 +8,7 @@ class Menu(Base):
     __tablename__ = 'menu'
 
     id = Column(Integer, primary_key=True, index=True)
-    food_id = Column(Integer, ForeignKey('foods.id'), index=True)
+    food_id = Column(Integer, ForeignKey('foods.id', ondelete="CASCADE"), index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 

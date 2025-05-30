@@ -13,7 +13,7 @@ class Food(Base):
     code = Column(Integer, nullable=False)
     weight = Column(String(255), nullable=False)
     cost = Column(Integer, nullable=False)
-    category_id = Column(Integer, ForeignKey('food_categories.id'), index=True)
+    category_id = Column(Integer, ForeignKey('food_categories.id', ondelete="CASCADE"), index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
     
@@ -21,4 +21,4 @@ class Food(Base):
     category = relationship('FoodCategory', back_populates='foods')
     feedback = relationship('FoodFeedback', back_populates='food')
     score = relationship('FoodScore', back_populates='food')
-    menu = relationship('Menu', back_populates='food')
+    menu = relationship('Menu', back_populates='food', cascade="all, delete-orphan")

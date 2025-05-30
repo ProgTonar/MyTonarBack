@@ -8,7 +8,7 @@ router = APIRouter()
 def get_money_service():
     return MoneyService()
 
-@router.get('/get/{login}', response_model=MoneySchema)
+@router.get('/get/{login}', response_model=MoneySchema, summary='Получение расчетного листа')
 async def get_money(login: int,service: MoneyService = Depends(get_money_service)):
     return await service.get_money(login)
 
