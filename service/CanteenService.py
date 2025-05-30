@@ -1,14 +1,15 @@
 from sqlalchemy.orm import Session, joinedload, load_only
 from sqlalchemy import func, and_
+from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 import httpx
 import os
 from dotenv import load_dotenv
-from schemas.CanteenSchema import GetReceipt, CreateMenu
+from schemas.CanteenSchema import GetReceipt, CreateMenu, CreateScore
 from schemas.BaseSchema import RessponseMessage
 from datetime import datetime, time
 from typing import List
-from models import Food, Menu, FoodCategory
+from models import Food, Menu, FoodCategory, FoodScore
 
 
 load_dotenv()
@@ -47,6 +48,8 @@ class CanteenService:
             raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
         except httpx.RequestError as e:
             raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail='Внутренняя ошибка сервера')
         
     async def get_receipt_now(self, login: int):
         try:
@@ -74,6 +77,8 @@ class CanteenService:
             raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
         except httpx.RequestError as e:
             raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,detail=str(e))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail='Внутренняя ошибка сервера')
 
     async def create_menu(self, foods: List[CreateMenu]):
         try:
@@ -83,7 +88,7 @@ class CanteenService:
                 if db_food:
                     db_food.cost = food.cost
 
-                    food_day = Menu(food_id=db_food.id)
+                    food_day = Menu(food_id=db_food.id, date=food.date)
                     self.db.add(food_day)
                 else:
                     category = self.db.query(FoodCategory).filter(FoodCategory.name == food.category).first()
@@ -96,25 +101,27 @@ class CanteenService:
 
                     self.db.flush()
 
-                    food_day = Menu(food_id=food_new.id)
+                    food_day = Menu(food_id=food_new.id, date=food.date)
                     self.db.add(food_day)
 
             self.db.commit()
 
             return RessponseMessage(message='Меню успешно загруженно')
-        except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise HTTPException(status_code=500, detail='Ошибка базы данных')
+        except Exception as e:
+            raise HTTPException(status_code=500, detail='Внутренняя ошибка сервера')
         
     async def get_menu_today(self):
         try:
-            start_of_day = datetime.combine(datetime.today(), time.min)
-            end_of_day = datetime.combine(datetime.today(), time.max)
+            today = datetime.today().date()
 
             filter_menu = (
                 self.db.query(
                     func.max(Menu.id)
                 )
-                .filter(Menu.created_at.between(start_of_day, end_of_day))
+                .filter(Menu.date == today)
                 .group_by(Menu.food_id)
                 .subquery()
             )
@@ -135,9 +142,45 @@ class CanteenService:
                     'name': item.name,
                     'cost': item.cost,
                     'weight': item.weight,
-                    'category': item.category.name
+                    'category': item.category.name,
+                    'score': item.weight,
+                    'feedback': item.weight
                 })
 
             return foods_today
-        except httpx.HTTPStatusError as e:
-            raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+        except SQLAlchemyError as e:
+            raise HTTPException(status_code=500, detail='Ошибка базы данных')
+        except Exception as e:
+            raise HTTPException(status_code=500, detail='Внутренняя ошибка сервера')
+        
+    async def create_food_score(self, score: CreateScore):
+        try:
+            existing_score = self.db.query(FoodScore).filter(
+                FoodScore.food_id == score.food_id,
+                FoodScore.user_id == score.user_id
+            ).first()
+
+            if existing_score:
+                raise HTTPException(status_code=409, detail='Вы уже оценивали это блюдо')
+            
+            food = self.db.query(Food).filter(Food.id == score.food_id).first()
+            
+            if not food:
+                raise HTTPException(status_code=404, detail='Блюдо не найдено')
+            
+            new_score = FoodScore(
+                score=score.score, 
+                food_id=score.food_id, 
+                user_id=score.user_id
+            )
+            
+            self.db.add(new_score)
+            self.db.commit()
+
+            return RessponseMessage(message='Оценка успешно поставлена')
+        
+        except SQLAlchemyError as e:
+            self.db.rollback()
+            raise HTTPException(status_code=500, detail='Ошибка базы данных')
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

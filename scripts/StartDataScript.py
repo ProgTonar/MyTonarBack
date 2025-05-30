@@ -20,5 +20,5 @@ def load_initial_data():
     finally:
         db.close()
 
-if __name__ == '_main__':
+if __name__ == '__main__':
     load_initial_data()

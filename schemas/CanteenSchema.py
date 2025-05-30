@@ -13,3 +13,9 @@ class CreateMenu(BaseModel):
     cost: int
     weight: str = Field(..., max_length=100)
     category: str = Field(..., max_length=100)
+    date: str = Field(..., max_length=100)
+
+class CreateScore(BaseModel):
+    user_id: int
+    food_id: int
+    score: int

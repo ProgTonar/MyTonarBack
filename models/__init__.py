@@ -1,1 +1,1 @@
-from .Canteen import Food, Menu, FoodCategory
+from .Canteen import Food, Menu, FoodCategory, FoodFeedback, FoodScore

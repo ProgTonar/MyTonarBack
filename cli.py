@@ -242,7 +242,7 @@ def make_script(name: str):
             "        db.rollback()\n"
             "    finally:\n"
             "        db.close()\n\n"
-            "if __name__ == '_main__':\n"
+            "if __name__ == '__main__':\n"
             f"    {name}Script()\n"
         )
     typer.echo(f"✅ скрипт {name} создан")

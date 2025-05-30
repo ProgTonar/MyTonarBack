@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from database import get_db
 from sqlalchemy.orm import Session
 from service.CanteenService import CanteenService
-from schemas.CanteenSchema import GetReceipt, CreateMenu
+from schemas.CanteenSchema import GetReceipt, CreateMenu, CreateScore
 from schemas.BaseSchema import RessponseMessage
 from typing import List
 
@@ -28,6 +28,6 @@ async def create_menu(foods: list[CreateMenu], service: CanteenService = Depends
 async def get_menu_today(service: CanteenService = Depends(get_canteen_service)):
     return await service.get_menu_today()
 
-@router.get('/food/score/create', summary='Создание оценки блюда')
-async def get_menu_today(service: CanteenService = Depends(get_canteen_service)):
-    return await service.get_menu_today()
+@router.post('/score/food/create', summary='Создание оценки блюда', response_model=RessponseMessage)
+async def create_food_score(score: CreateScore,service: CanteenService = Depends(get_canteen_service)):
+    return await service.create_food_score(score)
