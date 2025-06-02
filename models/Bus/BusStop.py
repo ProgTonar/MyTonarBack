@@ -1,11 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from datetime import datetime
 from database import Base
-from models.Bus.Bus import bus_route_stops
 
-class Stop(Base):
+class BusStop(Base):
     __tablename__ = "bus_stops"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -15,4 +13,4 @@ class Stop(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
-    bus_navigates = relationship("route", secondary=bus_route_stops, back_populates="bus_stops") 
+    routes = relationship("BusRoute", secondary="bus_route_stops", back_populates="stops")

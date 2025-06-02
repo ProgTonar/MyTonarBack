@@ -8,8 +8,7 @@ from alembic import context
 from database.database import Base
 from sqlalchemy.engine.url import make_url
 import pymysql
-from models.Canteen import Menu, Food, FoodCategory, FoodFeedback, FoodScore
-from models.Bus import Bus, Stop
+import models
 
 
 config = context.config

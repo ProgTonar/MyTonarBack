@@ -9,6 +9,7 @@ class FoodScore(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     score = Column(Integer, index=True, nullable=False)
+    feedback = Column(String(255), nullable=True)
     food_id = Column(Integer, ForeignKey('foods.id', ondelete="CASCADE"), index=True, nullable=False)
     user_id = Column(Integer, index=True, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

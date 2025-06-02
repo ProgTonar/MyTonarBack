@@ -19,8 +19,4 @@ class CreateScore(BaseModel):
     user_id: int
     food_id: int
     score: int
-
-class CreateFeedback(BaseModel):
-    user_id: int
-    food_id: int
-    feedback: str = Field(..., max_length=250)
+    feedback: Optional[str] = Field(None, min_length=1, max_length=255)

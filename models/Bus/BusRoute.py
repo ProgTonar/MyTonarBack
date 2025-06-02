@@ -6,11 +6,11 @@ from database import Base
 bus_route_stops = Table(
     'bus_route_stops',
     Base.metadata,
-    Column('bus_navigate_id', Integer, ForeignKey('bus_routes.id'), primary_key=True),
+    Column('route_id', Integer, ForeignKey('bus_routes.id'), primary_key=True),
     Column('stop_id', Integer, ForeignKey('bus_stops.id'), primary_key=True)
 )
 
-class BusNavigate(Base):
+class BusRoute(Base):
     __tablename__ = "bus_routes"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -22,7 +22,7 @@ class BusNavigate(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
 
-    stops = relationship("stop", secondary=bus_route_stops, back_populates="bus_routes") 
+    stops = relationship("BusStop", secondary="bus_route_stops", back_populates="routes") 
 
 
     

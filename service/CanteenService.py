@@ -1,15 +1,15 @@
-from sqlalchemy.orm import Session, joinedload, load_only
+from sqlalchemy.orm import Session 
 from sqlalchemy import func, and_
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException, status
 import httpx
 import os
 from dotenv import load_dotenv
-from schemas.CanteenSchema import GetReceipt, CreateMenu, CreateScore, CreateFeedback
+from schemas.CanteenSchema import GetReceipt, CreateMenu, CreateScore
 from schemas.BaseSchema import RessponseMessage
-from datetime import datetime, time
+from datetime import datetime
 from typing import List
-from models import Food, Menu, FoodCategory, FoodScore, FoodFeedback
+from models import Food, Menu, FoodCategory, FoodScore
 
 
 load_dotenv()
@@ -80,9 +80,9 @@ class CanteenService:
         except Exception as e:
             raise HTTPException(status_code=500, detail='Внутренняя ошибка сервера')
 
-    async def create_menu(self, foods: List[CreateMenu]):
+    async def create_menu(self, data: List[CreateMenu]):
         try:
-            for food in foods:
+            for food in data:
                 db_food = self.db.query(Food).filter(Food.code == food.code).first()
                 
                 if db_food:
@@ -137,6 +137,9 @@ class CanteenService:
                 .all()
             )
 
+            if not raw_foods:
+                raise HTTPException(status_code=404, detail='Меню на сегодня не найдено')
+
             foods_today = []
 
             for item in raw_foods:
@@ -146,15 +149,14 @@ class CanteenService:
 
                 avg_score = round(avg_score, 2) if avg_score is not None else 0
 
-                feedback = self.db.query(FoodFeedback).filter(FoodFeedback.food_id == item.id).count()
-
                 foods_today.append({
+                    'id': item.id,
                     'name': item.name,
                     'cost': item.cost,
                     'weight': item.weight,
                     'category': item.category.name,
                     'score': avg_score,
-                    'feedback': feedback
+                    'feedback': len(item.score)
                 })
 
             return foods_today
@@ -165,26 +167,30 @@ class CanteenService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
-    async def create_food_score(self, score: CreateScore):
+    async def create_food_score(self, data: CreateScore):
         try:
             existing_score = self.db.query(FoodScore).filter(
-                FoodScore.food_id == score.food_id,
-                FoodScore.user_id == score.user_id
+                FoodScore.food_id == data.food_id,
+                FoodScore.user_id == data.user_id
             ).first()
 
             if existing_score:
                 raise HTTPException(status_code=409, detail='Вы уже оценивали это блюдо')
             
-            food = self.db.query(Food).filter(Food.id == score.food_id).first()
+            food = self.db.query(Food).filter(Food.id == data.food_id).first()
             
             if not food:
                 raise HTTPException(status_code=404, detail='Блюдо не найдено')
             
             new_score = FoodScore(
-                score=score.score, 
-                food_id=score.food_id, 
-                user_id=score.user_id
+                score=data.score,
+                food_id=data.food_id, 
+                user_id=data.user_id
             )
+
+            if data.feedback:
+                new_score.feedback = data.feedback
+
             
             self.db.add(new_score)
             self.db.commit()
@@ -199,65 +205,34 @@ class CanteenService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
-    async def create_food_feedback(self, feedback: CreateFeedback):
-        try:
-            food = self.db.query(Food).filter(Food.id == feedback.food_id).first()
-            
-            if not food:
-                raise HTTPException(status_code=404, detail='Блюдо не найдено')
-            
-            new_feedback = FoodFeedback(
-                feedback=feedback.feedback, 
-                food_id=feedback.food_id, 
-                user_id=feedback.user_id
-            )
-            
-            self.db.add(new_feedback)
-            self.db.commit()
-
-            return RessponseMessage(message='Оценка успешно поставлена')
-        
-        except SQLAlchemyError as e:
-            self.db.rollback()
-            raise HTTPException(status_code=500, detail='Ошибка базы данных')
-        except HTTPException as e:
-            raise
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        
     async def get_detail_food(self, food_id: int):
         try:
-            db_feedback = self.db.query(FoodFeedback).filter(FoodFeedback.food_id == food_id).all()
-                
-            feedback = []
-            if db_feedback:
-                for feedback_item in db_feedback:
-                    created_at = feedback_item.created_at
-                    
-                    feedback.append({
-                        "user_id": feedback_item.user_id,
-                        "feedback": feedback_item.feedback,
-                        "date": {
-                            "date": created_at.strftime("%d.%m.%Y"),
-                            "time": created_at.strftime("%H:%M"),
-                        }
-                    })
-            else: 
-                feedback = "Отзывов пока нет"
+            raw_scores = self.db.query(FoodScore).filter(FoodScore.food_id == food_id).all()
 
-            avg_score = self.db.query(
-                func.avg(FoodScore.score)
-            ).filter(FoodScore.food_id == food_id).scalar()
-
-            count_score = self.db.query(FoodScore).filter(FoodScore.food_id == food_id).count()
+            if not raw_scores:
+                raise HTTPException(status_code=404, detail='Оценок у блюда нету')
             
-            if avg_score:
-                score = {
-                    "score": round(avg_score, 2),
-                    "count_score": count_score
-                }
-            else:
-                avg_score = 0
+            scores = []
+
+            total = 0
+            count = 0
+            
+            for item in raw_scores:
+                scores.append({
+                    "user_id": item.user_id,
+                    "score": item.score,
+                    "feedback": item.feedback,
+                    "date": {
+                        "date": item.created_at.strftime("%d.%m.%Y"),
+                        "time": item.created_at.strftime("%H:%M"),
+                    }
+                })
+
+                total+=item.score
+                count+=1
+            
+            avg_score = round(total / count if count > 0 else 0, 2)
+            
 
             food = self.db.query(Food).filter(Food.id == food_id).first()
 
@@ -267,8 +242,9 @@ class CanteenService:
             response = {
                 "name": food.name,
                 "weight": food.weight,
-                "score": score,
-                "feedback": feedback,
+                "avg_score": avg_score,
+                "count_score": len(raw_scores),
+                "feedback": scores,
             }
 
             return response

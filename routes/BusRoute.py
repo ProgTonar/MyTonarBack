@@ -1,49 +1,30 @@
-# from fastapi import APIRouter, Depends, HTTPException
-# from sqlalchemy.ext.asyncio import AsyncSession
-# from database import get_db
-# from service.BusService import BusNavigateService
-# from schemas.BusSchema import BusNavigate, BusNavigateCreate, BusNavigateUpdate
-# from typing import List
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from database import get_db
+from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema
+from schemas.BaseSchema import RessponseMessage
+from service.BusService import BusService
 
-# router = APIRouter()
+router = APIRouter()
 
-# @router.post("/", response_model=BusNavigate)
-# async def create_bus_navigate(
-#     bus_navigate: BusNavigateCreate,
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     service = BusNavigateService(db)
-#     return await service.create(bus_navigate)
+def get_bus_service(db: Session = Depends(get_db)):
+    return BusService(db)
 
-# @router.get("/{bus_navigate_id}", response_model=BusNavigate)
-# async def get_bus_navigate(
-#     bus_navigate_id: int,
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     service = BusNavigateService(db)
-#     bus_navigate = await service.get_by_id(bus_navigate_id)
-#     if not bus_navigate:
-#         raise HTTPException(status_code=404, detail="Маршрут не найден")
-#     return bus_navigate
+@router.post("/route/create", response_model=RessponseMessage)
+async def create_bus_route(data: BusRouteSchema, service: BusService = Depends(get_bus_service)):
+    return await service.create_bus_route(data)
 
-# @router.get("/", response_model=List[BusNavigate])
-# async def get_all_bus_navigates(
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     service = BusNavigateService(db)
-#     return await service.get_all()
+@router.get("/route/detail/{route_id}")
+async def get_route_detail(route_id: int, service: BusService = Depends(get_bus_service)):
+    return await service.get_route_detail(route_id)
 
-# @router.put("/{bus_navigate_id}", response_model=BusNavigate)
-# async def update_bus_navigate(
-#     bus_navigate_id: int,
-#     bus_navigate_data: BusNavigateUpdate,
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     service = BusNavigateService(db)
-#     bus_navigate = await service.update(bus_navigate_id, bus_navigate_data)
-#     if not bus_navigate:
-#         raise HTTPException(status_code=404, detail="Маршрут не найден")
-#     return bus_navigate
+@router.get("/routes/get")
+async def get_all_routes(service: BusService = Depends(get_bus_service)):
+    return await service.get_all_routes()
+
+@router.patch("/route/update", response_model=RessponseMessage)
+async def route_update(data: BusRouteUpdateSchema, service: BusService = Depends(get_bus_service)):
+    return await service.route_update(data)
 
 # @router.delete("/{bus_navigate_id}")
 # async def delete_bus_navigate(

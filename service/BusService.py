@@ -1,148 +1,81 @@
-# from sqlalchemy.ext.asyncio import AsyncSession
-# from sqlalchemy import select, insert, delete
-# from sqlalchemy.orm import selectinload
-# from models.Bus import BusNavigate, stops_has_busnavigate
-# from schemas.BusSchema import BusNavigateCreate, BusNavigateUpdate
-# from typing import List, Optional
-# from datetime import datetime
+from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema
+from fastapi import HTTPException
+from models import BusRoute
+from schemas.BaseSchema import RessponseMessage
+from sqlalchemy.orm import Session 
 
-# class BusNavigateService:
-#     def __init__(self, db: AsyncSession):
-#         self.db = db
 
-#     async def create(self, bus_navigate: BusNavigateCreate) -> BusNavigate:
-#         # Создаем маршрут
-#         db_bus_navigate = BusNavigate(
-#             title=bus_navigate.title,
-#             name_start=bus_navigate.name_start,
-#             name_end=bus_navigate.name_end,
-#             dots_start={"x": bus_navigate.dots_start.x, "y": bus_navigate.dots_start.y},
-#             dots_end={"x": bus_navigate.dots_end.x, "y": bus_navigate.dots_end.y}
-#         )
-#         self.db.add(db_bus_navigate)
-#         await self.db.commit()
-#         await self.db.refresh(db_bus_navigate)
+class BusService:
+    def __init__(self, db: Session):
+        self.db = db
 
-#         # Если есть остановки, создаем их и связываем с маршрутом
-#         if bus_navigate.stops:
-#             for stop_data in bus_navigate.stops:
-#                 # Создаем новую остановку
-#                 db_stop = Stop(
-#                     name=stop_data.name,
-#                     arrival_time=stop_data.arrival_time,
-#                     coordinate={"x": stop_data.coordinate.x, "y": stop_data.coordinate.y}
-#                 )
-#                 self.db.add(db_stop)
-#                 await self.db.commit()
-#                 await self.db.refresh(db_stop)
+    async def create_bus_route(self, data: BusRouteSchema):
+        db_route = self.db.query(BusRoute).filter(BusRoute.title == data.title).first()
 
-#                 # Создаем связь
-#                 stmt = insert(stops_has_busnavigate).values(
-#                     bus_navigate_id=db_bus_navigate.id,
-#                     stop_id=db_stop.id
-#                 )
-#                 await self.db.execute(stmt)
+        if db_route:
+            raise HTTPException(status_code=409, detail="Маршрут с таким названием уже существует")
 
-#         await self.db.commit()
-#         return await self.get_by_id(db_bus_navigate.id)
+        bus_route = BusRoute(
+            title=data.title,
+            name_start=data.name_start,
+            name_end=data.name_end,
+            dots_start={"x": data.dots_start.x, "y": data.dots_start.y},
+            dots_end={"x": data.dots_end.x, "y": data.dots_end.y}
+        )
+        self.db.add(bus_route)
+        self.db.commit()
 
-#     async def get_by_id(self, bus_navigate_id: int) -> Optional[BusNavigate]:
-#         query = select(BusNavigate).options(selectinload(BusNavigate.stops)).where(BusNavigate.id == bus_navigate_id)
-#         result = await self.db.execute(query)
-#         return result.scalar_one_or_none()
+        self.db.commit()
+        return RessponseMessage(message='Маршрут успешно создан')
 
-#     async def get_all(self) -> List[BusNavigate]:
-#         query = select(BusNavigate).options(selectinload(BusNavigate.stops))
-#         result = await self.db.execute(query)
-#         return result.scalars().all()
+    async def get_route_detail(self, route_id: int):
+        raw_route = self.db.query(BusRoute).filter(BusRoute.id == route_id).first()
 
-#     async def update(self, bus_navigate_id: int, bus_navigate_data: BusNavigateUpdate) -> Optional[BusNavigate]:
-#         db_bus_navigate = await self.get_by_id(bus_navigate_id)
-#         if not db_bus_navigate:
-#             return None
+        stops = raw_route.stops
 
-#         # Обновляем основные поля маршрута
-#         update_data = bus_navigate_data.model_dump(exclude={'stops'}, exclude_unset=True)
+        route = {
+            "title": raw_route.title,
+            "name_start": raw_route.name_start,
+            "name_end": raw_route.name_end,
+            "dots_start": raw_route.dots_start,
+            "dots_end": raw_route.dots_end,
+            "stops": stops
+        }
+
+        return route
+
+    async def get_all_routes(self):
+        raw_routes = self.db.query(BusRoute).all()
+
+        routes = []
+
+        for item in raw_routes:
+            routes.append({
+                "title": item.title,
+                "name_start": item.name_start,
+                "name_end": item.name_end,
+                "dots_start": item.dots_start,
+                "dots_end": item.dots_end,
+            })
+
+        return routes 
+
+    async def route_update(self, data: BusRouteUpdateSchema):
+        db_route = self.db.query(BusRoute).filter(BusRoute.id == data.id).first()
+        if not db_route:
+            raise HTTPException(status_code=404, detail="Маршрут не найден")
         
-#         # Преобразуем координаты в нужный формат
-#         if "dots_start" in update_data:
-#             dots_start = update_data["dots_start"]
-#             if isinstance(dots_start, dict):
-#                 update_data["dots_start"] = {"x": dots_start.get("x", 0), "y": dots_start.get("y", 0)}
-#             else:
-#                 update_data["dots_start"] = {"x": dots_start.x, "y": dots_start.y}
-
-#         if "dots_end" in update_data:
-#             dots_end = update_data["dots_end"]
-#             if isinstance(dots_end, dict):
-#                 update_data["dots_end"] = {"x": dots_end.get("x", 0), "y": dots_end.get("y", 0)}
-#             else:
-#                 update_data["dots_end"] = {"x": dots_end.x, "y": dots_end.y}
-
-#         for key, value in update_data.items():
-#             setattr(db_bus_navigate, key, value)
+        update_data = data.model_dump(exclude_unset=True)
         
-#         # Обрабатываем остановки, если они есть в запросе
-#         if bus_navigate_data.stops is not None:
-#             # Обработка удаления остановок
-#             stops_to_delete = [stop for stop in bus_navigate_data.stops if stop.should_delete and stop.id is not None]
-#             for stop in stops_to_delete:
-#                 await self.db.execute(
-#                     delete(stops_has_busnavigate).where(
-#                         stops_has_busnavigate.c.bus_navigate_id == bus_navigate_id,
-#                         stops_has_busnavigate.c.stop_id == stop.id
-#                     )
-#                 )
-
-#             # Обработка новых и существующих остановок
-#             for stop_data in bus_navigate_data.stops:
-#                 if not stop_data.should_delete:
-#                     if stop_data.id is None:
-#                         # Создаем новую остановку
-#                         coordinate = stop_data.coordinate
-#                         if isinstance(coordinate, dict):
-#                             coordinate = {"x": coordinate.get("x", 0), "y": coordinate.get("y", 0)}
-#                         else:
-#                             coordinate = {"x": coordinate.x, "y": coordinate.y}
-
-#                         db_stop = Stop(
-#                             name=stop_data.name,
-#                             arrival_time=stop_data.arrival_time,
-#                             coordinate=coordinate
-#                         )
-#                         self.db.add(db_stop)
-#                         await self.db.commit()
-#                         await self.db.refresh(db_stop)
-
-#                         # Создаем связь
-#                         stmt = insert(stops_has_busnavigate).values(
-#                             bus_navigate_id=bus_navigate_id,
-#                             stop_id=db_stop.id
-#                         )
-#                         await self.db.execute(stmt)
-#                     else:
-#                         # Обновляем существующую остановку
-#                         stop_query = select(Stop).where(Stop.id == stop_data.id)
-#                         stop_result = await self.db.execute(stop_query)
-#                         db_stop = stop_result.scalar_one_or_none()
-                        
-#                         if db_stop:
-#                             db_stop.name = stop_data.name
-#                             db_stop.arrival_time = stop_data.arrival_time
-                            
-#                             coordinate = stop_data.coordinate
-#                             if isinstance(coordinate, dict):
-#                                 coordinate = {"x": coordinate.get("x", 0), "y": coordinate.get("y", 0)}
-#                             else:
-#                                 coordinate = {"x": coordinate.x, "y": coordinate.y}
-                            
-#                             db_stop.coordinate = coordinate
-#                             db_stop.updated_at = datetime.utcnow()
-
-#         db_bus_navigate.updated_at = datetime.utcnow()
-#         await self.db.commit()
-#         await self.db.refresh(db_bus_navigate)
-#         return await self.get_by_id(bus_navigate_id)
+        update_data.pop('id', None)
+        
+        for field, value in update_data.items():
+            setattr(db_route, field, value)
+        
+        self.db.commit()
+        self.db.refresh(db_route)
+        
+        return RessponseMessage(message='Маршрут успешно обновлен')
 
 #     async def delete(self, bus_navigate_id: int) -> bool:
 #         db_bus_navigate = await self.get_by_id(bus_navigate_id)

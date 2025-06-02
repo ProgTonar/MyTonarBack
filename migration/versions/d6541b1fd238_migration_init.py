@@ -1,8 +1,8 @@
 """migration_init
 
-Revision ID: 4813e7622e40
+Revision ID: d6541b1fd238
 Revises: 
-Create Date: 2025-05-30 13:10:38.681975
+Create Date: 2025-06-02 16:19:26.579434
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4813e7622e40'
+revision: str = 'd6541b1fd238'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -52,11 +52,11 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_food_categories_id'), 'food_categories', ['id'], unique=False)
     op.create_table('bus_route_stops',
-    sa.Column('bus_navigate_id', sa.Integer(), nullable=False),
+    sa.Column('route_id', sa.Integer(), nullable=False),
     sa.Column('stop_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['bus_navigate_id'], ['bus_routes.id'], ),
+    sa.ForeignKeyConstraint(['route_id'], ['bus_routes.id'], ),
     sa.ForeignKeyConstraint(['stop_id'], ['bus_stops.id'], ),
-    sa.PrimaryKeyConstraint('bus_navigate_id', 'stop_id')
+    sa.PrimaryKeyConstraint('route_id', 'stop_id')
     )
     op.create_table('foods',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -72,22 +72,10 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_foods_category_id'), 'foods', ['category_id'], unique=False)
     op.create_index(op.f('ix_foods_id'), 'foods', ['id'], unique=False)
-    op.create_table('food_feedbacks',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('feedback', sa.String(length=255), nullable=False),
-    sa.Column('food_id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['food_id'], ['foods.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_food_feedbacks_food_id'), 'food_feedbacks', ['food_id'], unique=False)
-    op.create_index(op.f('ix_food_feedbacks_id'), 'food_feedbacks', ['id'], unique=False)
-    op.create_index(op.f('ix_food_feedbacks_user_id'), 'food_feedbacks', ['user_id'], unique=False)
     op.create_table('food_scores',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('score', sa.Integer(), nullable=False),
+    sa.Column('feedback', sa.String(length=255), nullable=True),
     sa.Column('food_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
@@ -126,10 +114,6 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_food_scores_id'), table_name='food_scores')
     op.drop_index(op.f('ix_food_scores_food_id'), table_name='food_scores')
     op.drop_table('food_scores')
-    op.drop_index(op.f('ix_food_feedbacks_user_id'), table_name='food_feedbacks')
-    op.drop_index(op.f('ix_food_feedbacks_id'), table_name='food_feedbacks')
-    op.drop_index(op.f('ix_food_feedbacks_food_id'), table_name='food_feedbacks')
-    op.drop_table('food_feedbacks')
     op.drop_index(op.f('ix_foods_id'), table_name='foods')
     op.drop_index(op.f('ix_foods_category_id'), table_name='foods')
     op.drop_table('foods')

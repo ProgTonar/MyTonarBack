@@ -19,6 +19,5 @@ class Food(Base):
     
     # Используем строку вместо прямого импорта
     category = relationship('FoodCategory', back_populates='foods')
-    feedback = relationship('FoodFeedback', back_populates='food')
     score = relationship('FoodScore', back_populates='food')
     menu = relationship('Menu', back_populates='food', cascade="all, delete-orphan")
