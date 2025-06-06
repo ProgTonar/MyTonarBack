@@ -1,6 +1,6 @@
-from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema
+from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema, StopCreateSchema
 from fastapi import HTTPException
-from models import BusRoute
+from models import BusRoute, BusStop
 from schemas.BaseSchema import RessponseMessage
 from sqlalchemy.orm import Session 
 
@@ -60,8 +60,9 @@ class BusService:
 
         return routes 
 
-    async def route_update(self, data: BusRouteUpdateSchema):
+    async def update_route(self, data: BusRouteUpdateSchema):
         db_route = self.db.query(BusRoute).filter(BusRoute.id == data.id).first()
+
         if not db_route:
             raise HTTPException(status_code=404, detail="Маршрут не найден")
         
@@ -73,54 +74,44 @@ class BusService:
             setattr(db_route, field, value)
         
         self.db.commit()
-        self.db.refresh(db_route)
         
         return RessponseMessage(message='Маршрут успешно обновлен')
 
-#     async def delete(self, bus_navigate_id: int) -> bool:
-#         db_bus_navigate = await self.get_by_id(bus_navigate_id)
-#         if not db_bus_navigate:
-#             return False
-        
-#         # Удаляем связи с остановками
-#         await self.db.execute(
-#             delete(stops_has_busnavigate).where(
-#                 stops_has_busnavigate.c.bus_navigate_id == bus_navigate_id
-#             )
-#         )
-        
-#         await self.db.delete(db_bus_navigate)
-#         await self.db.commit()
-#         return True
+    async def delete_route(self, route_id: int):
+        db_route = self.db.query(BusRoute).filter(BusRoute.id == route_id).first()
 
-#     async def add_stop(self, bus_navigate_id: int, stop_id: int) -> Optional[BusNavigate]:
-#         # Загружаем маршрут вместе со связанными остановками
-#         query = select(BusNavigate).options(selectinload(BusNavigate.stops)).where(BusNavigate.id == bus_navigate_id)
-#         result = await self.db.execute(query)
-#         db_bus_navigate = result.scalar_one_or_none()
-        
-#         if not db_bus_navigate:
-#             return None
+        if not db_route:
+            raise HTTPException(status_code=404, detail='Маршрут не найден')
 
-#         # Загружаем остановку
-#         stop_query = select(Stop).where(Stop.id == stop_id)
-#         stop_result = await self.db.execute(stop_query)
-#         stop = stop_result.scalar_one_or_none()
-        
-#         if not stop:
-#             return None
+        self.db.delete(db_route)
+        self.db.commit()
 
-#         # Добавляем связь через промежуточную таблицу
-#         stmt = insert(stops_has_busnavigate).values(
-#             bus_navigate_id=bus_navigate_id,
-#             stop_id=stop_id
-#         )
-#         await self.db.execute(stmt)
-#         await self.db.commit()
+        return RessponseMessage(message='Маршрут успешно удален')
+
+    async def create_stop(self, data: StopCreateSchema):
+        db_stop = self.db.query(BusStop).filter(BusStop.name == data.name).first()
+
+        if db_stop:
+            raise HTTPException(status_code=409, detail='Остановка с таким именем уже существует')
         
-#         # Перезагружаем объект с обновленными связями
-#         await self.db.refresh(db_bus_navigate)
-#         return db_bus_navigate 
+        new_stop = BusStop(name=data.name, arrival_time=data.time, coordinate={"x": data.coordinate.x, "y": data.coordinate.y})
+
+        self.db.add(new_stop)
+        self.db.commit()
+
+        return RessponseMessage(message='Остановка успешно создана')
+    
+    async def delete_stop(self, stop_id: int):
+        db_stop = self.db.query(BusStop).filter(BusStop.name == stop_id).first()
+
+        if not db_stop:
+            raise HTTPException(status_code=409, detail='Такой остановки не существует')
+        
+        self.db.delete(db_stop)
+        self.db.commit()
+
+        return RessponseMessage(message='Остановка успешно удалена')
+#         
     
 #     async def create(self, stop: StopCreate) -> Stop:
 #         db_stop = Stop(

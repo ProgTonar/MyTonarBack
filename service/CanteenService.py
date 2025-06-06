@@ -208,9 +208,6 @@ class CanteenService:
     async def get_detail_food(self, food_id: int):
         try:
             raw_scores = self.db.query(FoodScore).filter(FoodScore.food_id == food_id).all()
-
-            if not raw_scores:
-                raise HTTPException(status_code=404, detail='Оценок у блюда нету')
             
             scores = []
 

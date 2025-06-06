@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema
+from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema, StopCreateSchema
 from schemas.BaseSchema import RessponseMessage
 from service.BusService import BusService
 
@@ -23,27 +23,17 @@ async def get_all_routes(service: BusService = Depends(get_bus_service)):
     return await service.get_all_routes()
 
 @router.patch("/route/update", response_model=RessponseMessage)
-async def route_update(data: BusRouteUpdateSchema, service: BusService = Depends(get_bus_service)):
-    return await service.route_update(data)
+async def update_route(data: BusRouteUpdateSchema, service: BusService = Depends(get_bus_service)):
+    return await service.update_route(data)
 
-# @router.delete("/{bus_navigate_id}")
-# async def delete_bus_navigate(
-#     bus_navigate_id: int,
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     service = BusNavigateService(db)
-#     if not await service.delete(bus_navigate_id):
-#         raise HTTPException(status_code=404, detail="Маршрут не найден")
-#     return {"message": "Маршрут удален успешно"}
+@router.delete("/route/delete/{route_id}", response_model=RessponseMessage)
+async def delete_route(route_id: int, service: BusService = Depends(get_bus_service)):
+    return await service.delete_route(route_id)
 
-# @router.post("/{bus_navigate_id}/stops/{stop_id}", response_model=BusNavigate)
-# async def add_stop_to_bus_navigate(
-#     bus_navigate_id: int,
-#     stop_id: int,
-#     db: AsyncSession = Depends(get_db)
-# ):
-#     service = BusNavigateService(db)
-#     bus_navigate = await service.add_stop(bus_navigate_id, stop_id)
-#     if not bus_navigate:
-#         raise HTTPException(status_code=404, detail="Маршрут или остановка не найдены")
-#     return bus_navigate 
+@router.post("/stop/create")
+async def create_stop(data: StopCreateSchema, service: BusService = Depends(get_bus_service)):
+    return await service.create_stop(data)
+
+@router.post("/stop/delete/{stop_id}")
+async def create_stop(stop_id: int, service: BusService = Depends(get_bus_service)):
+    return await service.create_stop(stop_id)

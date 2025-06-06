@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from datetime import time
 
 class Coordinate(BaseModel):
     x: float
@@ -24,44 +25,7 @@ class BusRouteUpdateSchema(BaseModel):
     dots_start: Optional[CoordinteUpdate] = Field(None)
     dots_end: Optional[CoordinteUpdate] = Field(None)
     
-# class BusNavigateCreate(BusNavigateBase):
-#     stops: int
-
-# class BusNavigateUpdate(BaseModel):
-#     title: Optional[str] = None
-#     name_start: Optional[str] = None
-#     name_end: Optional[str] = None
-#     dots_start: Optional[Coordinates] = None
-#     dots_end: Optional[Coordinates] = None
-#     stops: int
-
-#     model_config = ConfigDict(from_attributes=True)
-
-# class BusNavigate(BusNavigateBase):
-#     id: int
-#     created_at: datetime
-#     updated_at: Optional[datetime]
-#     stops: int
-
-# class StopBase(BaseModel):
-#     name: str
-#     arrival_time: str
-#     coordinate: Coordinates
-
-#     model_config = ConfigDict(from_attributes=True)
-
-# class StopUpdate(BaseModel):
-#     name: Optional[str] = None
-#     arrival_time: Optional[str] = None
-#     coordinate: Optional[Coordinates] = None
-
-#     model_config = ConfigDict(from_attributes=True)
-
-# class Stop(StopBase):
-#     id: int
-#     created_at: datetime
-#     updated_at: Optional[datetime]
-
-# class StopInRoute(StopBase):
-#     id: Optional[int] = None
-#     should_delete: Optional[bool] = False
+class StopCreateSchema(BaseModel):
+    name: str
+    time: time
+    coordinate: Coordinate
