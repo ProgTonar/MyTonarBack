@@ -1,4 +1,4 @@
-from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema, StopCreateSchema
+from schemas.BusSchema import BusRouteSchema, BusRouteUpdateSchema, StopCreateSchema, AddStopToRoute
 from fastapi import HTTPException
 from models import BusRoute, BusStop
 from schemas.BaseSchema import RessponseMessage
@@ -29,7 +29,7 @@ class BusService:
         return RessponseMessage(message='Маршрут успешно создан')
 
     async def get_route_detail(self, route_id: int):
-        raw_route = self.db.query(BusRoute).filter(BusRoute.id == route_id).first()
+        raw_route = self.db.get(BusRoute, route_id)
 
         stops = raw_route.stops
 
@@ -66,12 +66,11 @@ class BusService:
         if not db_route:
             raise HTTPException(status_code=404, detail="Маршрут не найден")
         
-        update_data = data.model_dump(exclude_unset=True)
-        
-        update_data.pop('id', None)
-        
-        for field, value in update_data.items():
-            setattr(db_route, field, value)
+        db_route.title = data.title
+        db_route.name_start = data.name_start
+        db_route.name_end = data.name_end
+        db_route.dots_start = data.dots_start.model_dump()
+        db_route.dots_end = data.dots_end.model_dump()
         
         self.db.commit()
         
@@ -101,8 +100,23 @@ class BusService:
 
         return RessponseMessage(message='Остановка успешно создана')
     
+    async def get_stop_detail(self, stop_id: int):
+        db_stop = self.db.get(BusStop, stop_id)
+
+        if not db_stop:
+            raise HTTPException(status_code=409, detail='Такой остановки не существует')
+        
+        stop = {
+            "id": db_stop.id,
+            "name": db_stop.name,
+            "time": db_stop.arrival_time,
+            "coordinate": db_stop.coordinate,
+        }
+
+        return stop
+    
     async def delete_stop(self, stop_id: int):
-        db_stop = self.db.query(BusStop).filter(BusStop.name == stop_id).first()
+        db_stop = self.db.query(BusStop).filter(BusStop.id == stop_id).first()
 
         if not db_stop:
             raise HTTPException(status_code=409, detail='Такой остановки не существует')
@@ -111,53 +125,47 @@ class BusService:
         self.db.commit()
 
         return RessponseMessage(message='Остановка успешно удалена')
-#         
     
-#     async def create(self, stop: StopCreate) -> Stop:
-#         db_stop = Stop(
-#             name=stop.name,
-#             arrival_time=stop.arrival_time,
-#             coordinate={"x": stop.coordinate.x, "y": stop.coordinate.y}
-#         )
-#         self.db.add(db_stop)
-#         await self.db.commit()
-#         await self.db.refresh(db_stop)
-#         return db_stop
+    async def update_stop(self, data: StopCreateSchema):
+        db_stop = self.db.query(BusStop).filter(BusStop.id == data.id).first()
 
-#     async def get_by_id(self, stop_id: int) -> Optional[Stop]:
-#         query = select(Stop).where(Stop.id == stop_id)
-#         result = await self.db.execute(query)
-#         return result.scalar_one_or_none()
-
-#     async def get_all(self) -> List[Stop]:
-#         query = select(Stop)
-#         result = await self.db.execute(query)
-#         return result.scalars().all()
-
-#     async def update(self, stop_id: int, stop_data: StopUpdate) -> Optional[Stop]:
-#         db_stop = await self.get_by_id(stop_id)
-#         if not db_stop:
-#             return None
-
-#         update_data = stop_data.model_dump(exclude_unset=True)
+        if not db_stop:
+            raise HTTPException(status_code=409, detail='Такой остановки не существует')
         
+        db_stop.name = data.name
+        db_stop.arrival_time = data.time
+        db_stop.coordinate = data.coordinate.model_dump()
+                
+        self.db.commit()
 
-#         if "coordinate" in update_data:
-#             update_data["coordinate"] = {"x": update_data["coordinate"].x, "y": update_data["coordinate"].y}
-
-#         for key, value in update_data.items():
-#             setattr(db_stop, key, value)
+        return RessponseMessage(message='Остановка успешно обновлена')
+    
+    async def add_stop_to_route(self, data: AddStopToRoute):
+        db_route = self.db.get(BusRoute, data.route_id)
+        db_stop = self.db.get(BusStop, data.stop_id)
         
-#         db_stop.updated_at = datetime.utcnow()
-#         await self.db.commit()
-#         await self.db.refresh(db_stop)
-#         return db_stop
-
-#     async def delete(self, stop_id: int) -> bool:
-#         db_stop = await self.get_by_id(stop_id)
-#         if not db_stop:
-#             return False
+        if not db_stop or not db_route:
+            raise HTTPException(status_code=404, detail='Остановка или маршрут не найдены')
         
-#         await self.db.delete(db_stop)
-#         await self.db.commit()
-#         return True 
+        if db_stop in db_route.stops:
+            raise HTTPException(status_code=409, detail='Остановка уже добавлена к маршруту')
+
+        db_route.stops.append(db_stop)
+        self.db.commit()
+            
+        return RessponseMessage(message='Остановка успешно обновлена')
+    
+    async def delete_stop_from_route(self, route_id: int, stop_id: int):
+        db_route = self.db.get(BusRoute, route_id)
+        db_stop = self.db.get(BusStop, stop_id) 
+
+        if not db_stop or not db_route:
+            raise HTTPException(status_code=404, detail='Остановка или маршрут не найдены')
+        
+        if db_stop not in db_route.stops:
+            raise HTTPException(status_code=409, detail='Остановка не привязана к маршруту')
+
+        db_route.stops.remove(db_stop)
+        self.db.commit()
+
+        return RessponseMessage(message='Остановка успешно удалена из маршрута')

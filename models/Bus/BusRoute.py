@@ -7,7 +7,7 @@ bus_route_stops = Table(
     'bus_route_stops',
     Base.metadata,
     Column('route_id', Integer, ForeignKey('bus_routes.id'), primary_key=True),
-    Column('stop_id', Integer, ForeignKey('bus_stops.id'), primary_key=True)
+    Column('stop_id', Integer, ForeignKey('bus_stops.id'), primary_key=True),
 )
 
 class BusRoute(Base):

@@ -19,13 +19,23 @@ class BusRouteSchema(BaseModel):
 
 class BusRouteUpdateSchema(BaseModel):
     id: int
-    title: Optional[str] = Field(None, min_length=1, max_length=255)
-    name_start: Optional[str] = Field(None, min_length=1, max_length=255)
-    name_end: Optional[str] = Field(None, min_length=1, max_length=255)
-    dots_start: Optional[CoordinteUpdate] = Field(None)
-    dots_end: Optional[CoordinteUpdate] = Field(None)
+    title: str = Field(..., min_length=1, max_length=255)
+    name_start: str = Field(..., min_length=1, max_length=255)
+    name_end: str = Field(..., min_length=1, max_length=255)
+    dots_start: CoordinteUpdate
+    dots_end: CoordinteUpdate
     
 class StopCreateSchema(BaseModel):
-    name: str
+    name: str = Field(..., min_length=1, max_length=255)
     time: time
     coordinate: Coordinate
+
+class StopUpdateSchema(BaseModel):
+    id: int
+    name: str = Field(..., min_length=1, max_length=255)
+    time: time
+    coordinate: Coordinate
+
+class AddStopToRoute(BaseModel):
+    stop_id: int
+    route_id: int
