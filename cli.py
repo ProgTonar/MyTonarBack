@@ -36,6 +36,14 @@ def check_file_exists(file_path):
     if os.path.exists(file_path):
         typer.echo(f"❌ Файл уже существует: {file_path}")
         raise typer.Exit()
+    
+def camel_to_snake(name):
+        snake_case = []
+        for i, char in enumerate(name):
+            if char.isupper() and i != 0:
+                snake_case.append('_')
+            snake_case.append(char.lower())
+        return ''.join(snake_case)
 
 # Команда создания структуры проекта
 @app.command()
@@ -101,15 +109,20 @@ def make_model(name: str):
     check_file_exists(file_path)
     create_git_ignore(path)
 
+    table_name = camel_to_snake(name)
+
     with open(file_path, "w") as f:
         f.write(
             "from database import Base\n"
-            "from sqlalchemy import Column, Integer, String\n"
+            "from sqlalchemy import Column, Integer, String, DateTime\n"
+            "from sqlalchemy.sql import func\n"
             "from sqlalchemy.orm import relationship\n\n"
-            f"class {pluralize(name)}(Base):\n"
-            f"    __tablename__ = '{pluralize(name.lower())}'\n\n"
+            f"class {name}(Base):\n"
+            f"    __tablename__ = '{pluralize(table_name.lower())}'\n\n"
             f"    id = Column(Integer, primary_key=True, index=True)\n"
             f"    name = Column(String, index=True)\n"
+            f"    created_at = Column(DateTime(timezone=True), server_default=func.now())\n"
+            f"    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)\n"
         )
     typer.echo(f"✅ Модель {name} создана")
 
