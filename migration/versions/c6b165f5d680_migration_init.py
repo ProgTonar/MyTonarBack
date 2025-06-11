@@ -1,8 +1,8 @@
-"""migration_init
+"""migration init
 
-Revision ID: ab6a9c833d5f
+Revision ID: c6b165f5d680
 Revises: 
-Create Date: 2025-06-06 13:24:27.048956
+Create Date: 2025-06-11 11:00:09.781747
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ab6a9c833d5f'
+revision: str = 'c6b165f5d680'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -51,6 +51,30 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_food_categories_id'), 'food_categories', ['id'], unique=False)
+    op.create_table('status_appeals',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_status_appeals_id'), 'status_appeals', ['id'], unique=False)
+    op.create_index(op.f('ix_status_appeals_name'), 'status_appeals', ['name'], unique=False)
+    op.create_table('appeals',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('title', sa.String(length=255), nullable=False),
+    sa.Column('description', sa.Text(), nullable=False),
+    sa.Column('answer', sa.String(length=255), nullable=True),
+    sa.Column('status_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['status_id'], ['status_appeals.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_appeals_id'), 'appeals', ['id'], unique=False)
+    op.create_index(op.f('ix_appeals_user_id'), 'appeals', ['user_id'], unique=False)
     op.create_table('bus_route_stops',
     sa.Column('route_id', sa.Integer(), nullable=False),
     sa.Column('stop_id', sa.Integer(), nullable=False),
@@ -87,6 +111,17 @@ def upgrade() -> None:
     op.create_index(op.f('ix_food_scores_id'), 'food_scores', ['id'], unique=False)
     op.create_index(op.f('ix_food_scores_score'), 'food_scores', ['score'], unique=False)
     op.create_index(op.f('ix_food_scores_user_id'), 'food_scores', ['user_id'], unique=False)
+    op.create_table('like_appeals',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('appeal_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['appeal_id'], ['appeals.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_like_appeals_appeal_id'), 'like_appeals', ['appeal_id'], unique=False)
+    op.create_index(op.f('ix_like_appeals_user_id'), 'like_appeals', ['user_id'], unique=False)
     op.create_table('menu',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('food_id', sa.Integer(), nullable=True),
@@ -109,6 +144,9 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_menu_food_id'), table_name='menu')
     op.drop_index(op.f('ix_menu_date'), table_name='menu')
     op.drop_table('menu')
+    op.drop_index(op.f('ix_like_appeals_user_id'), table_name='like_appeals')
+    op.drop_index(op.f('ix_like_appeals_appeal_id'), table_name='like_appeals')
+    op.drop_table('like_appeals')
     op.drop_index(op.f('ix_food_scores_user_id'), table_name='food_scores')
     op.drop_index(op.f('ix_food_scores_score'), table_name='food_scores')
     op.drop_index(op.f('ix_food_scores_id'), table_name='food_scores')
@@ -118,6 +156,12 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_foods_category_id'), table_name='foods')
     op.drop_table('foods')
     op.drop_table('bus_route_stops')
+    op.drop_index(op.f('ix_appeals_user_id'), table_name='appeals')
+    op.drop_index(op.f('ix_appeals_id'), table_name='appeals')
+    op.drop_table('appeals')
+    op.drop_index(op.f('ix_status_appeals_name'), table_name='status_appeals')
+    op.drop_index(op.f('ix_status_appeals_id'), table_name='status_appeals')
+    op.drop_table('status_appeals')
     op.drop_index(op.f('ix_food_categories_id'), table_name='food_categories')
     op.drop_table('food_categories')
     op.drop_index(op.f('ix_bus_stops_id'), table_name='bus_stops')

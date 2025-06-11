@@ -105,7 +105,7 @@ def make_project():
 def make_model(name: str):
     path = os.path.join(BASE_DIR, "models")
     create_folder_with_init(path)
-    file_path = os.path.join(path, f"{name}.py")
+    file_path = os.path.join(path, f"{name}Model.py")
     check_file_exists(file_path)
     create_git_ignore(path)
 
@@ -163,8 +163,8 @@ def make_route(name: str):
             f"def get_{name.lower()}_service(db: Session = Depends(get_db)):\n"
             f"  return {name}Service(db)\n\n"
             f"# @router.get('/{name.lower()}')\n"
-            f"# async def create_{name.lower()}({name.lower()}: {name}Create, service: {name}Service = Depends(get_{name.lower()}_service)):\n"
-            f"# return {{'message': 'Это роут {name}'}}\n"
+            f"# async def create_{name.lower()}(data: пайдентик модель, service: {name}Service = Depends(get_{name.lower()}_service)):\n"
+            f"#     return await service.create_{name.lower()}(data)\n"
         )
     typer.echo(f"✅ Путь {name} создан")
 
@@ -211,19 +211,19 @@ def make_factory(name: str):
 
     with open(file_path, "w") as f:
         f.write(
-            "import factory"
-            "from factory.alchemy import SQLAlchemyModelFactory"
-            "from models import SomeModel"
-            "from database import SessionLocal"
-            f"class {name}(SQLAlchemyModelFactory):"
-            "    class Meta:"
-            "        model = SomeModel"
-            "        sqlalchemy_session = SessionLocal()"
-            "        sqlalchemy_session_persistence = 'commit'"
-            "    name = factory.Iterator([ # колонка в таблице" 
-            "        'data1', # данные для колонки"
-            "        'data2', "
-            "        'data3', "
+            "import factory\n"
+            "from factory.alchemy import SQLAlchemyModelFactory\n"
+            "from models import SomeModel\n"
+            "from database import SessionLocal\n\n"
+            f"class {name}(SQLAlchemyModelFactory):\n"
+            "    class Meta:\n"
+            "        model = SomeModel\n"
+            "        sqlalchemy_session = SessionLocal()\n"
+            "        sqlalchemy_session_persistence = 'commit'\n\n"
+            "    name = factory.Iterator([ # колонка в таблице\n" 
+            "        'data1', # данные для колонки\n"
+            "        'data2', \n"
+            "        'data3', \n"
             "    ])"
         )
     typer.echo(f"✅ Фабрика {name} создана")

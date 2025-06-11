@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from routes.MoneyRoute import router as MoneyRoute
 from routes.CanteenRoute import router as CanteenRoute
 from routes.BusRoute import router as BusRoute
+from routes.AppealRoute import router as AppealRoute
 from database import Base, engine
 
     
@@ -27,6 +28,7 @@ app.include_router(BusRoute, prefix="/api/bus", tags=["Расписание ав
 # app.include_router(ContactsRoute, prefix="/contact", tags=["Контакты"])
 app.include_router(MoneyRoute, prefix="/api/money", tags=["Расчетный листок"])
 app.include_router(CanteenRoute, prefix="/api/canteen", tags=["Столовая"])
+app.include_router(AppealRoute, prefix="/api/appeal", tags=["Обращения"])
 
 @app.get("/", summary='Тестовый запрос', tags=["Тест"])
 async def root():

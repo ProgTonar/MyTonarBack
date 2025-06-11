@@ -1,2 +1,3 @@
-from .Appeal import Appeal
-from .StatusAppeal import StatusAppeal
+from .AppealModel import Appeal
+from .StatusAppealModel import StatusAppeal
+from .LikeAppealModel import LikeAppeal

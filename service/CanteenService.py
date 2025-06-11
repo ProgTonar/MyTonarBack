@@ -201,7 +201,7 @@ class CanteenService:
             self.db.rollback()
             raise HTTPException(status_code=500, detail='Ошибка базы данных')
         except HTTPException as e:
-            raise
+            raise HTTPException(status_code=e.status_code(), detail=str(e))
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
